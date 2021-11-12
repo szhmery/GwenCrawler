@@ -1,2 +1,2 @@
-# SaveNotes
-The program is used to save html content or files into Youdao Note, to make it easy for me to collect and review the notes.
+# GwenCrawler
+The program is used to download TeacherGwen's articles and parse them and then save them into Youdao Note, to make it easier to collect and review the notes.
