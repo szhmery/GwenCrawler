@@ -2,6 +2,7 @@
 unused/*
 articles/*
 .idea/*
+conf/*
 
 __pycache__/
 *.py[cod]

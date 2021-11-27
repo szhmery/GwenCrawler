@@ -5,7 +5,7 @@ import shutil
 import threading
 import time
 import uuid
-
+import configparser
 import requests
 
 from ArticlesList import ArticlesList
@@ -14,22 +14,23 @@ from ParseArticles import ParseArticles
 
 # sys.setdefaultencoding('utf8')
 
-class YoudaoNote():
+class YoudaoNote:
     def __init__(self):
         # 登录有道云笔记后存储在 Cookie 里的值
-        self.YNOTE_PERS = '***'
-        self.YNOTE_SESS = '***'
-        self.YNOTE_LOGIN = '5||1635733966658'
-        self.YNOTE_CSTK = 'Kw80sUNa'
-        self.JSESSIONID = 'aaaoQwcHWPd7yc6MoNiYx'
+        conf = configparser.ConfigParser()
+        conf.read('conf/cookies.cfg')
+        cstk = conf.get("youdao", "cstk")
+        cookie = conf.get("youdao", "cookie")
+        user_agent = conf.get("weixin", "useragent")
+        self.YNOTE_CSTK = cstk
 
         self.HEADERS = {
             'Accept-Encoding':
                 'gzip, deflate, br',
             'User-Agent':
-                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36',
-            'Cookie': '***YNOTE_CSTK={YNOTE_CSTK}'.
-                format(YNOTE_CSTK=self.YNOTE_CSTK), # use your own cookie
+                user_agent,
+            'Cookie': cookie + '{YNOTE_CSTK}'.
+                format(YNOTE_CSTK=self.YNOTE_CSTK),  # use your own cookie
             'Accept':
                 'application/json, text/plain, */*',
             'Host':
@@ -118,12 +119,10 @@ class YoudaoNote():
 
     # 根据笔记信息获取笔记内容
     def getNoteDetail(self, note):
-        url = 'https://note.youdao.com/yws/api/personal/file/{id}?method=download&read=true&cstk={CSTK}'.format(
-            id=note['id'], CSTK=self.YNOTE_CSTK)
         url = "https://note.youdao.com/yws/api/personal/sync?method=download&keyfrom=web&cstk={CSTK}&sev=j1".format(
             CSTK=self.YNOTE_CSTK)
         data = {
-            "fileId": note['id'],  # "92c00f2304441b247538546fd23",
+            "fileId": note['id'],
             "version": -1,
             "read": "true",
             "cstk": self.YNOTE_CSTK
@@ -247,9 +246,6 @@ class YoudaoNote():
         content = ""
         with open(file_name, "r", encoding="utf-8") as f:
             content = f.read()
-            # for line in f.readlines():
-            #     line = line.strip('\n')
-            #     con += line
             print(len(content))
         return content
 
@@ -269,10 +265,11 @@ class YoudaoNote():
         t.start()
 
     # 入口
-    def run(self):
-        dirs = os.listdir('articles')  # 获取指定路径下的文件
+    def run(self, files):
+        if not files:
+            files = os.listdir('articles')  # 获取指定路径下的文件
         names = []
-        for file_name in dirs:  # 循环读取路径下的文件并筛选输出
+        for file_name in files:  # 循环读取路径下的文件并筛选输出
             if os.path.splitext(file_name)[1] == ".md":  # 筛选csv文件
                 print(file_name)
                 names.append(file_name)
@@ -285,8 +282,11 @@ class YoudaoNote():
 if __name__ == '__main__':
     # debug_get_content_list()
     articles_ins = ArticlesList()
-    list_file = articles_ins.get_articles_list()
+    page_number = 3
+    list_file = articles_ins.get_articles_list(page_number)
+    # list_file = 'articles/GwenList20211127.csv'
     parser = ParseArticles(list_file)
-    parser.run()
+    file_names = parser.run()
+    # file_names = ['2021Y45W_20211108-20211114.md', '2021Y46W_20211115-20211121.md']
     youdao = YoudaoNote()
-    youdao.run()
+    youdao.run(file_names)

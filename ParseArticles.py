@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
 import re
-
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -65,11 +64,8 @@ class ParseArticles:
 
     def parse_content(self, article_date, title, html_str):  # 提取数据
         item = {}
-        html = etree.HTML(html_str)
+        # html = etree.HTML(html_str)
 
-        # title = html.xpath("//*[@id=\"activity-name\"]/text()")
-        # title = [i.replace("\n", "").replace(" ", "") for i in title]
-        # title = ''.join(title)
         item['title'] = title
 
         this_date, weekday, file_name = self.parse_date_format(article_date)
@@ -98,19 +94,16 @@ class ParseArticles:
         result = re.sub("<qqmusic.*?></qqmusic>", "", result)
         result = re.sub("<animate.*?></animate>", "", result)
 
-        if '早读' or '国庆特刊' in title:
+        if '早读' in title or '国庆特刊' in title:
             if '国庆特刊' in title or is_workday(this_date):
                 print("是工作日")
                 # 从英音讲解前面两个section，删除到Longman Dictionary后面一个</section>
                 idx1 = result.find('英音讲解')
-                # idx2 = result.rfind('<section', 0, result.rfind('<section', 0, idx1) - 1)
                 idx2 = self.rfind_n_substr(result, '<section', 2, idx1)
 
                 idx3 = result.find('Longman Dictionary')
                 idx4 = result.find('</section>', idx3)
-                # idx4 = result.find('</section>', result.find('</section>', idx3) + 1)  #找第二个section不对，把原文删除了。
                 result = result[0:idx2] + result[idx4 + 10:]  # 10 is length of '</section>'
-                # result = result[0:idx1 - 252] + result[idx2 + 133:]
 
                 idx3 = result.find('随意造句')
                 idx4 = result[idx3:].find('<section')
@@ -120,18 +113,13 @@ class ParseArticles:
                 if weekday == 6:
                     print("Saturday")
                     idx1 = result.find('周末没有朗读版哦')
-                    # idx2 = result.rfind('<section', 0, result.rfind('<section', 0, idx1) - 1)
                     idx2 = self.rfind_n_substr(result, '<section', 2, idx1)
                     idx3 = result.find('本周早读小测')
-                    # idx4 = result.rfind('<section', 0, result.rfind('<section', 0, idx3) - 1)
                     idx4 = self.rfind_n_substr(result, '<section', 2, idx3)
-                    # result = result[0:idx1 - 181] + result[idx2 - 431:]
                     result = result[0:idx2] + result[idx4:]
                     idx5 = result.find('答案在哪里呢')
                     # 往前找到第四个section，删除
                     idx6 = self.rfind_n_substr(result, '<section', 4, idx5)
-                    # idx6 = result.rfind('<section', 0, result.rfind('<section', 0, result.rfind('<section', 0, result.rfind('<section', 0, idx5) - 1) - 1) - 1)
-                    # result = result[0:index - 1008]
                     result = result[0:idx6]
 
                 elif weekday == 7:
@@ -140,7 +128,6 @@ class ParseArticles:
                     idx2 = self.rfind_n_substr(result, '<section', 2, idx1)
                     idx3 = result.find('本周早读小测答案')
                     idx4 = self.rfind_n_substr(result, '<section', 2, idx3)
-                    # result = result[0:idx1 - 181] + result[idx2 - 431:]
                     result = result[0:idx2] + result[idx4:]
                     idx5 = result.find('底部点击')
                     idx6 = self.rfind_n_substr(result, '<section', 1, idx5)
@@ -149,19 +136,14 @@ class ParseArticles:
                     print("Other holiday.")
 
         if '每日听写|' in title:
-            # idx1 = result.find('词汇补充</strong></p></section></section></section>')
             idx1 = result.find('词汇补充')
-            # result = result[idx1 - 557:]
             idx2 = self.rfind_n_substr(result, '<section', 3, idx1)
-            # idx2 = result.find('>加入我们</p></section>')
             idx3 = result.find('加入我们')
             idx4 = self.rfind_n_substr(result, '<section', 1, idx3)
-            # result = result[0:idx2] + "></p></section></section></section></section></section>"
             result = result[idx2:idx4]
 
         if '翻译' in title:
             idx1 = result.find('>美文</p><p style=')
-            # result = result[idx1 - 79:]
             idx2 = self.rfind_n_substr(result, '<section', 1, idx1)
             idx3 = result.find(
                 '</section></section><section powered-by="xiumi.us" style="text-align: justify;box-sizing: border-box;"><p style="white-space: normal;margin: 0px;padding: 0px;box-sizing: border-box;"><br style="box-sizing: border-box;"/></p></section><section powered-by="xiumi.us" style="text-align: justify;box-sizing: border-box;"><p style="white-space: normal;margin: 0px;padding: 0px;box-sizing: border-box;"><br style="box-sizing: border-box;"/></p></section>')
@@ -193,7 +175,7 @@ class ParseArticles:
         self.save_md(result, file_name)
         print("Save to " + file_name)
 
-        item['content'] = result
+        item['filename'] = file_name + '.md'
         return item
 
     def save_md(self, html_str, page_name):
@@ -214,7 +196,7 @@ class ParseArticles:
         if begin == 0:
             split_list.append(url_list[:])
         else:
-            split_list.append(url_list[i:])
+            split_list.append(url_list[begin:])
 
         ans_list = []
         for one_day in split_list[::-1]:
@@ -226,7 +208,7 @@ class ParseArticles:
         # 获取url列表和时间列表
         url_list = self.get_url_list()
         url_list = self.reorder_list(url_list)
-
+        articles_files = set()
         # 遍历url列表，发送请求，获取响应
         for line in url_list:
             num = line[0]
@@ -239,11 +221,8 @@ class ParseArticles:
 
             # 解析url，获得html
             html_str = self.parse_url(url)
-            # with open('articles/1102听写.html', 'w') as f:
-            #     f.write(html_str)
 
             # 获取内容
-            self.parse_content(article_date, title, html_str)
-
-
-
+            items = self.parse_content(article_date, title, html_str)
+            articles_files.add(items['filename'])
+        return articles_files

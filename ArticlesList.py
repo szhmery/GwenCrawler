@@ -2,7 +2,7 @@
 import datetime
 import random
 import time
-
+import configparser
 import pandas as pd
 import requests
 
@@ -10,17 +10,23 @@ import requests
 class ArticlesList:
     def __init__(self):
         self.BEGIN = '0'
-        self.FAKEID = 'MzI4OTAyODUxNA=='
-        self.TOKEN = '1409449766'
 
+        conf = configparser.ConfigParser()
+        conf.read('conf/cookies.cfg')
+        cookie = conf.get("weixin", "cookie")
+        token = conf.get("weixin", "token")
+        fake_id = conf.get("weixin", "fakeid")
+        user_agent = conf.get("weixin", "useragent")
+        self.FAKEID = fake_id
         # 使用Cookie，跳过登陆操作
         self.headers = {
-            "Cookie": "appmsgl***", # use your own cookie
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36",
+            "Cookie": cookie,
+            "User-Agent": user_agent,
         }
+        self.TOKEN = token
 
         self.data = {
-            "token": "1376978134",
+            "token": token,
             "lang": "zh_CN",
             "f": "json",
             "ajax": "1",
@@ -28,13 +34,13 @@ class ArticlesList:
             "begin": "0",
             "count": "5",
             "query": "TeacherGwen",
-            "fakeid": "MzI4OTAyODUxNA==",
+            "fakeid": fake_id,
             "type": "9",
         }
 
-    def get_articles_list(self):
+    def get_articles_list(self, page_number):
         content_list = []
-        for i in range(30):
+        for i in range(page_number):
             self.BEGIN = str(i * 5)
             # url里面包含了参数信息，不需要用data，如果url不带信息只有data参数也不行。
             # 目标url
@@ -46,25 +52,30 @@ class ArticlesList:
 
             # 使用get方法进行提交
             # content_json = requests.get(url, headers=headers, payload=data).json()
-            r = requests.request("GET", url, headers=self.headers)
-            content_json = r.json()
-            if r.cookies.get_dict():  # 保持cookie有效
-                s.cookies.update(r.cookies)
-            # 返回了一个json，里面是每一页的数据
-            for item in content_json["app_msg_list"]:
-                # 提取每页文章的标题及对应的url
-                items = []
-                tupTime = time.localtime(item['update_time'])
-                # standardTime = time.strftime("%Y-%m-%d %H:%M:%S", tupTime)
-                standardTime = time.strftime("%Y%m%d", tupTime)  # 获得日期
-                items.append(standardTime)
-                items.append(item["title"])
-                items.append(item["link"])
-                content_list.append(items)
-            sleep_time = random.randint(5, 15)  # 随机sleep时间
-            time.sleep(sleep_time)
-            print("Get page " + str(i))
-
+            res = requests.request("GET", url, headers=self.headers)
+            if res.status_code == 200:
+                content_json = res.json()
+                if res.cookies.get_dict():  # 保持cookie有效
+                    s.cookies.update(res.cookies)
+                if 'app_msg_list' in content_json.keys():
+                    # 返回了一个json，里面是每一页的数据
+                    for item in content_json["app_msg_list"]:
+                        # 提取每页文章的标题及对应的url
+                        items = []
+                        tupTime = time.localtime(item['update_time'])
+                        # standardTime = time.strftime("%Y-%m-%d %H:%M:%S", tupTime)
+                        standardTime = time.strftime("%Y%m%d", tupTime)  # 获得日期
+                        items.append(standardTime)
+                        items.append(item["title"])
+                        items.append(item["link"])
+                        content_list.append(items)
+                    sleep_time = random.randint(5, 15)  # 随机sleep时间
+                    time.sleep(sleep_time)
+                    print("Get page " + str(i + 1))
+                else:
+                    print("Invalid session!")
+            else:
+                print("Can't access to Weixin Dingyuehao.")
 
         print(content_list)
         name = ['title', 'date', 'link']
