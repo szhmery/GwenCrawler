@@ -15,8 +15,8 @@ class ArticlesList:
         conf.read('conf/cookies.cfg')
         cookie = conf.get("weixin", "cookie")
         token = conf.get("weixin", "token")
-        fake_id = conf.get("weixin", "fakeid")
-        user_agent = conf.get("weixin", "useragent")
+        fake_id = conf.get("weixin", "fake_id")
+        user_agent = conf.get("weixin", "user_agent")
         self.FAKEID = fake_id
         # 使用Cookie，跳过登陆操作
         self.headers = {
@@ -38,9 +38,10 @@ class ArticlesList:
             "type": "9",
         }
 
-    def get_articles_list(self, page_number):
+    def get_articles_list(self, cut_date):
         content_list = []
-        for i in range(page_number):
+        break_flag = False
+        for i in range(30):
             self.BEGIN = str(i * 5)
             # url里面包含了参数信息，不需要用data，如果url不带信息只有data参数也不行。
             # 目标url
@@ -63,15 +64,21 @@ class ArticlesList:
                         # 提取每页文章的标题及对应的url
                         items = []
                         tupTime = time.localtime(item['update_time'])
+                        cut_date_struct = time.strptime(cut_date, "%Y%m%d")
+                        if tupTime < cut_date_struct:
+                            break_flag = True
+                            break
                         # standardTime = time.strftime("%Y-%m-%d %H:%M:%S", tupTime)
                         standardTime = time.strftime("%Y%m%d", tupTime)  # 获得日期
                         items.append(standardTime)
                         items.append(item["title"])
                         items.append(item["link"])
                         content_list.append(items)
+                    print("Get page " + str(i + 1))
+                    if break_flag:
+                        break
                     sleep_time = random.randint(5, 15)  # 随机sleep时间
                     time.sleep(sleep_time)
-                    print("Get page " + str(i + 1))
                 else:
                     print("Invalid session!")
             else:

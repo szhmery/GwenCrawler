@@ -21,7 +21,7 @@ class YoudaoNote:
         conf.read('conf/cookies.cfg')
         cstk = conf.get("youdao", "cstk")
         cookie = conf.get("youdao", "cookie")
-        user_agent = conf.get("weixin", "useragent")
+        user_agent = conf.get("youdao", "user_agent")
         self.YNOTE_CSTK = cstk
 
         self.HEADERS = {
@@ -168,15 +168,13 @@ class YoudaoNote:
 
         res = requests.post(url, headers=self.HEADERS, data=data)
         if res.status_code == 200:
-            print('Success!')
+            print('Create note {} success!'.format(fileId))
             resCon = res.content
             print(resCon)
-            print(fileId)
         else:
-            print('Failed!')
+            print('Failed to create note {}!'.format(fileId))
             resCon = res.content
             print(resCon)
-            print(fileId)
         return fileId
 
     def editNote(self, content, fileId):
@@ -274,6 +272,7 @@ class YoudaoNote:
                 print(file_name)
                 names.append(file_name)
                 content = self.readHtmlContent('articles/' + file_name)
+                print("Load content from html file {}.".format('articles/' + file_name))
                 note_id = self.createNote(content, file_name)
                 print(note_id)
                 time.sleep(10)
@@ -282,11 +281,12 @@ class YoudaoNote:
 if __name__ == '__main__':
     # debug_get_content_list()
     articles_ins = ArticlesList()
-    page_number = 3
-    list_file = articles_ins.get_articles_list(page_number)
+    cut_date = '20211122'
+    print("Start from date {}:".format(cut_date))
+    list_file = articles_ins.get_articles_list(cut_date)
     # list_file = 'articles/GwenList20211127.csv'
     parser = ParseArticles(list_file)
     file_names = parser.run()
-    # file_names = ['2021Y45W_20211108-20211114.md', '2021Y46W_20211115-20211121.md']
+    # file_names = ['2021Y47W_20211122-20211128.md']
     youdao = YoudaoNote()
     youdao.run(file_names)
