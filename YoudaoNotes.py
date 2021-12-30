@@ -281,12 +281,13 @@ class YoudaoNote:
 if __name__ == '__main__':
     # debug_get_content_list()
     articles_ins = ArticlesList()
-    cut_date = '20211122'
+    # cut_date is the start date for this running
+    cut_date = '20211213'
     print("Start from date {}:".format(cut_date))
     list_file = articles_ins.get_articles_list(cut_date)
-    # list_file = 'articles/GwenList20211127.csv'
+    # list_file = 'articles/GwenList20211230.csv'
     parser = ParseArticles(list_file)
     file_names = parser.run()
-    # file_names = ['2021Y47W_20211122-20211128.md']
+    # file_names = ['2021Y51W_20211220-20211226.md', '2021Y50W_20211213-20211219.md']
     youdao = YoudaoNote()
     youdao.run(file_names)

@@ -80,7 +80,8 @@ class ArticlesList:
                     sleep_time = random.randint(5, 15)  # 随机sleep时间
                     time.sleep(sleep_time)
                 else:
-                    print("Invalid session!")
+                    print("Invalid session! Please update your token!")
+                    break
             else:
                 print("Can't access to Weixin Dingyuehao.")
 

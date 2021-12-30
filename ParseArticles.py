@@ -93,6 +93,7 @@ class ParseArticles:
         result = re.sub("<mpvoice.*?></mpvoice>", "", result)
         result = re.sub("<qqmusic.*?></qqmusic>", "", result)
         result = re.sub("<animate.*?></animate>", "", result)
+        result = re.sub("<mpvideosnap.*?></mpvideosnap>", "", result)
 
         if '早读' in title or '国庆特刊' in title:
             if '国庆特刊' in title or is_workday(this_date):
@@ -145,12 +146,12 @@ class ParseArticles:
         if '翻译' in title:
             idx1 = result.find('>美文</p><p style=')
             idx2 = self.rfind_n_substr(result, '<section', 1, idx1)
-            idx3 = result.find(
-                '</section></section><section powered-by="xiumi.us" style="text-align: justify;box-sizing: border-box;"><p style="white-space: normal;margin: 0px;padding: 0px;box-sizing: border-box;"><br style="box-sizing: border-box;"/></p></section><section powered-by="xiumi.us" style="text-align: justify;box-sizing: border-box;"><p style="white-space: normal;margin: 0px;padding: 0px;box-sizing: border-box;"><br style="box-sizing: border-box;"/></p></section>')
-            result = result[idx2:idx3]
+            result = result[idx2:]
+            idx3 = result.find('</section>')
+            result = result[:idx3 + 10] # add </section>
 
         if '每日一句' in title:
-            index = result.find('<section class="channels_iframe_wrp"><mpvideosnap')
+            index = result.find('<section class="channels_iframe_wrp"></section')
             result = result[0:index]
 
         if '老外说' in title:
