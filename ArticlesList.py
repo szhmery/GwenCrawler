@@ -13,6 +13,8 @@ class ArticlesList:
 
         conf = configparser.ConfigParser()
         conf.read('conf/cookies.cfg')
+        # cut_date is the start date for this running
+        self.cut_date = conf.get("youdao", "cut_date")
         cookie = conf.get("weixin", "cookie")
         token = conf.get("weixin", "token")
         fake_id = conf.get("weixin", "fake_id")

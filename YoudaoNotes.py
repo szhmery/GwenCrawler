@@ -163,7 +163,8 @@ class YoudaoNote:
             "bodyString": content.encode('utf-8'),
             "createTime": int(time.time()),
             "modifyTime": int(time.time()),
-            "transactionId": fileId
+            "transactionId": fileId,
+            "transactionTime": int(time.time())
         }
 
         res = requests.post(url, headers=self.HEADERS, data=data)
@@ -281,13 +282,11 @@ class YoudaoNote:
 if __name__ == '__main__':
     # debug_get_content_list()
     articles_ins = ArticlesList()
-    # cut_date is the start date for this running
-    cut_date = '20211213'
-    print("Start from date {}:".format(cut_date))
-    list_file = articles_ins.get_articles_list(cut_date)
-    # list_file = 'articles/GwenList20211230.csv'
+    print("Start from date {}:".format(articles_ins.cut_date))
+    list_file = articles_ins.get_articles_list(articles_ins.cut_date)
+    # list_file = 'articles/GwenList20220109.csv'
     parser = ParseArticles(list_file)
     file_names = parser.run()
-    # file_names = ['2021Y51W_20211220-20211226.md', '2021Y50W_20211213-20211219.md']
+    # file_names = ['2022Y3W_20220117-20220123.md']
     youdao = YoudaoNote()
     youdao.run(file_names)
